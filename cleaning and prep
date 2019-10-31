@@ -15,7 +15,7 @@ tour[need_NA] <-sapply(tour[need_NA], function(x) gsub("0", "NA", x))
 library(plyr)
 revalue_cols <- c("Recommend_GAT", "TravelAgain", "Groups_Interest", "Reference")
 tour[revalue_cols] <- sapply(tour[revalue_cols], revalue, replace= c("1"="0", "2"="1"))
-tour[!revalue_cols]
+
 
 #Making sure that the right columns are factors and intervals
 factor_cols<- c("Recommend_GAT", "TravelAgain", "Groups_Interest", "Reference", "Overall_Impression", "Pre_Departure", "Flight_Itin", "TD_Overall", "Extension", "Insurance", "FltGty", "Complaint_Event", "Voucher_Event", "Book_12Mo")
@@ -23,13 +23,6 @@ numeric_cols<- c("Optionals", "Eval_Contact_Days")
 tour[numeric_cols] <- sapply(tour[numeric_cols], as.numeric)
 tour[factor_cols] <- sapply(tour[factor_cols], as.factor)
 tour <- tour %>%
-  mutate_if(is.character, as.factor)
+  mutate_if(is.character, as.factor)%>%
+  select(-matches("Optionals"))
   
-##Imputing values for Recommend_GAT, TravelAgain, Groups_Interest, Reference, Overall_Impression, Pre_Departure, Flight_Itin, TD_Overall
-tour.imp <- tour
-tour_impute <- c("Recommend_GAT", "TravelAgain", "Groups_Interest", "Reference", "Overall_Impression", "Pre_Departure", "Flight_Itin", "TD_Overall")
-Mode <- sapply(tour[tour_impute], mode)
-tour.imp[tour_impute]<-as.data.frame(mapply(impute, x=tour[tour_impute]), y=Mode)
-
-#Creating a missing value flag
-tour.imp[c("Recommend_GAT.NA", "TravelAgain.NA", "Groups_Interest.NA", "Reference.NA", "Overall_Impression.NA", "Pre_Departure.NA", "Flight_Itin.NA", "TD_Overall.NA")] <- ifelse(is.na(tour[c("Recommend_GAT", "TravelAgain", "Groups_Interest", "Reference", "Overall_Impression", "Pre_Departure", "Flight_Itin", "TD_Overall")]), 1, 0)
