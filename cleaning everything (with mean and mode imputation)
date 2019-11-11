@@ -124,7 +124,7 @@ tour.imp <- tour.xf
 tour_impute <- c("Recommend_GAT", "TravelAgain", "Groups_Interest", "Reference", "Overall_Impression", "Pre_Departure", "Flight_Itin", "TD_Overall")
 
 Mode <- sapply(tour.imp[tour_impute], mode)
-tour.imp[tour_impute]<-as.data.frame(mapply(impute, x=tour.imp[tour_impute]), y=Mode)
+tour.imp[tour_impute]<-as.data.frame(mapply(impute, x=tour.imp[tour_impute], y=Mode))
 
 #Creating a missing value flag
 tour.imp[c("Recommend_GAT.NA", "TravelAgain.NA", "Groups_Interest.NA", "Reference.NA", "Overall_Impression.NA", "Pre_Departure.NA", "Flight_Itin.NA", "TD_Overall.NA")] <- ifelse(is.na(tour[c("Recommend_GAT", "TravelAgain", "Groups_Interest", "Reference", "Overall_Impression", "Pre_Departure", "Flight_Itin", "TD_Overall")]), 1, 0)
