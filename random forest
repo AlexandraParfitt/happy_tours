@@ -1,0 +1,51 @@
+
+load("C:/Users/alexa/Downloads/tour_cleaned.RData")
+#save(tour.imp, Mean, Mode, split, split.valid, split.test, file="tour_cleaned.RData")
+#split is the training data, split.valid is the validation data, split.test is the testing data
+
+View(tour.imp)
+minor <- unname(summary(tour.rf$Book_12Mo[split])[2])
+
+library(randomForest)
+library(caret)
+##### Running Random Forest with internal downsampling ######
+#### Parameter Tuning: mtry ####
+
+# m<-round(seq(from=2, to=28, length.out = 5))
+m<-seq(2,8, length.out = 20)
+fscore.seq<-numeric()
+
+for (i in 1:length(m)) {
+  set.seed(40703)
+  rf <- randomForest(Book_12Mo ~., data=tour.imp[split,], ntree = 500, strata = tour.imp$Book_12Mo[split],   sampsize=c(minor, minor), importance=FALSE, mtry=m[i])
+  rf.class<- predict(rf, newdata=tour.imp[split.valid,], type="response")
+  fscore.seq[i]<-confusionMatrix(table(rf.class, tour.imp[split.valid,]$Book_12Mo),
+                                 positive = "1")$byClass["F1"]
+}
+
+plot(m, fscore.seq, pch=19 , col="blue", type="b",
+     ylab="F-score",xlab="Number of Predictors considered at each split")
+
+
+m.best<- m[which.max(fscore.seq)] #2.631579 is the best m value
+
+set.seed(40703)
+RF <- randomForest(Book_12Mo ~., data=tour.imp[split, ], ntree = 1000, mtry=2.631579, strata = tour.rf$Book_12Mo[split], sampsize=c(minor, minor), importance=FALSE)
+
+print(RF)
+plot(RF)
+
+
+library(caret)
+RF.class<- predict(RF, newdata=tour.imp[split.valid,], type="response")
+fscore<-confusionMatrix(table(RF.class,tour.imp[split.valid,]$Book_12Mo),
+                        positive = "1")$byClass["F1"]  
+fscore
+#0.5329175 
+
+misclassification.rate <- (544+804)/(544 + 804 + 3748 + 769)
+misclassification.rate #0.229838
+#RF.class   
+#   0    1
+#0 3748  544
+#1  804  769
