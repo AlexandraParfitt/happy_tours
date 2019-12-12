@@ -1,0 +1,37 @@
+library(randomForest)
+library(caret)
+library(pROC)
+library(ROCR)
+library(rpart)
+library(partykit)
+
+
+load("~/Data Mining/project/tour_clean_bin.RData")
+load("~/Data Mining/project/RF.RData")
+
+# alternative cutoff (everything)
+RF.prob <- predict(RF, newdata=tour.imp, type="prob")[,2]
+rocCurve.RF <- roc(tour.imp$Book_12Mo, RF.prob, quiet=TRUE)
+RFThresh <-  coords(rocCurve.RF, x = "best", best.method = "closest.topleft", transpose = FALSE)
+RF.class <- as.factor(ifelse(RF.prob >= RFThresh$threshold, 1,0))
+
+
+#making a new dataframe
+tour.tree<-cbind(tour.imp, RF.class)
+drops <-c("Book_12Mo")
+tour.tree<-tour.tree[, !(names(tour.tree)%in% drops)]
+names(tour.tree[split,])                                          
+
+#Decision tree based on RF on training data
+tree <- rpart(formula=RF.class ~., data = tour.tree[split,], control=rpart.control(cp=0.0005))
+# Model pruning
+cp.seq=tree$cptable[,1]
+misc<-numeric()
+for (i in 1:length(cp.seq)) {
+  tree.predict = predict(prune(tree, cp=cp.seq[i]), tour.tree[split.valid,],type="class") 
+  cm=table(tour.tree[split.valid,]$RF.class, tree.predict) # confusion matrix 
+  misc[i]=(cm[1,2]+cm[2,1])/sum(cm) # misclassification rate
+}
+
+
+
